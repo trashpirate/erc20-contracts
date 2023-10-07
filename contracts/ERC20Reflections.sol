@@ -1,10 +1,3 @@
-/**
-        BUY, HOLD, EARN, BURN!
-        Telegram: https://t.me/buyholdearn
-        Website: http://buyholdearn.com
-        X: https://twitter.com/buyholdearn
- */
-
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
@@ -176,7 +169,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         isExcludedFromFee[account] = false;
     }
 
-    function setRule(address _uniswapV2Pair) external onlyOwner {
+    function enableTrading(address _uniswapV2Pair) external onlyOwner {
         uniswapV2Pair = _uniswapV2Pair;
         excludeFromReward(uniswapV2Pair);
     }
