@@ -10,7 +10,7 @@ const decimals = 18;
 const txFee = "500";
 const initialSupply = "1000000000";
 const constructorArguments = [name, symbol, process.env.OWNER_ADDRESS_MAINNET];
-const contractAddress = "0xFdE356C8F279AaC7AA7e78d5b6b3c9DCb98e4ed7";
+const contractAddress = "0xfc1B3395b8F4Cc4C025928C6d3471a1B9451A5d1";
 
 async function main() {
 
