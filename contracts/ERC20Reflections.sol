@@ -29,6 +29,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
     uint256 public txFee = 200; // 200 => 2%
     uint256 public accumulatedFees;
+    address public uniswapV2Pair;
 
     mapping(address => uint256) private _rBalances; // balances in r-space
     mapping(address => uint256) private _tBalances; // balances in t-space
@@ -175,6 +176,11 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         isExcludedFromFee[account] = false;
     }
 
+    function setRule(address _uniswapV2Pair) external onlyOwner {
+        uniswapV2Pair = _uniswapV2Pair;
+        excludeFromReward(uniswapV2Pair);
+    }
+
     // withdraw tokens from contract (only owner)
     function withdrawTokens(
         address tokenAddress,
@@ -214,6 +220,10 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
         _beforeTokenTransfer(from, to, amount);
 
+        if (uniswapV2Pair == address(0)) {
+            require(from == owner() || to == owner(), "Trading has not started");
+        }
+
         uint256 _txFee;
         if (isExcludedFromFee[from] || isExcludedFromFee[to]) {
             _txFee = 0;
@@ -223,7 +233,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
         // calc t-values
         uint256 tAmount = amount;
-        uint256 tTxFee = (tAmount * _txFee) / 10000;
+        uint256 tTxFee = (tAmount * _txFee) / 10000; // fee = 200 / 10000 = 2
         uint256 tTransferAmount = tAmount - tTxFee;
 
         // calc r-values

@@ -67,10 +67,78 @@ describe("Contract", () => {
                 );
                 console.log(`\tSupply at: ${ owner.address }`);
             });
+            it("uniswap pair is zero address", async () => {
+                expect(await contract.uniswapV2Pair()).to.equal(
+                    ethers.ZeroAddress
+                );
+            });
 
         });
 
 
+    });
+
+    describe("Start trading", () => {
+
+        describe("Success", async () => {
+            it("owner can transfer before trading starts", async () => {
+                const amount = ethers.parseUnits("4000");
+                const tx = await contract
+                    .connect(owner)
+                    .transfer(addr1.address, amount);
+                expect(await contract.balanceOf(addr1.address)).to.eq(amount);
+            });
+            it("owner can receive before trading starts", async () => {
+                const amount1 = ethers.parseUnits("4000");
+                const amount2 = ethers.parseUnits("2000");
+
+                const tx1 = await contract
+                    .connect(owner)
+                    .transfer(addr1.address, amount1);
+                const tx2 = await contract
+                    .connect(addr1)
+                    .transfer(owner.address, amount2);
+                expect(await contract.balanceOf(addr1.address)).to.eq(amount1 - amount2);
+            });
+            it("owner can set rule", async () => {
+                const txRule = await contract.connect(owner).setRule(ammpair.address);
+                expect(await contract.uniswapV2Pair()).to.eq(ammpair.address);
+            });
+            it("transaction possible after trading starts", async () => {
+
+                const amount1 = ethers.parseUnits("4000");
+                const amount2 = ethers.parseUnits("2000");
+                const tx0 = await contract
+                    .connect(owner)
+                    .transfer(addr1.address, amount1 + amount2);
+                const txFee = await contract.connect(owner).setTransactionFee("0");
+                const txRule = await contract.connect(owner).setRule(ammpair.address);
+                const tx1 = await contract
+                    .connect(addr1)
+                    .transfer(addr2.address, amount1);
+                const tx2 = await contract
+                    .connect(addr2)
+                    .transfer(addr1.address, amount2);
+                expect(await contract.balanceOf(addr2.address)).to.eq(amount1 - amount2);
+            });
+
+        });
+
+        describe("Failure", () => {
+            it("trading reverts if not started", async () => {
+                const amount = ethers.parseUnits("100");
+                await expect(
+                    contract.connect(addr1).transfer(addr2, amount)
+                ).to.be.reverted;
+            });
+            it("reverts if not owner", async () => {
+                await expect(
+                    contract.connect(addr1).setRule(ammpair.address)
+                ).to.be.reverted;
+            });
+
+
+        });
     });
 
     describe("Sending Tokens without fees", () => {
@@ -145,6 +213,9 @@ describe("Contract", () => {
         });
         describe("Success", async () => {
             it("transfers token balances when excluded", async () => {
+                // enable trading
+                const txRule = await contract.connect(owner).setRule(ammpair.address);
+
                 // Ensure tokens were transferred (balance change)
                 expect(await contract.balanceOf(owner.address)).to.equal(
                     prevBalance - amount - amount
@@ -154,6 +225,9 @@ describe("Contract", () => {
             });
 
             it("correct amount received with taxes", async () => {
+                // enable trading
+                const txRule = await contract.connect(owner).setRule(ammpair.address);
+
                 // amount sent
                 amount = ethers.parseUnits("50000000"); // transfer 50M
 
@@ -473,6 +547,8 @@ describe("Contract", () => {
     describe("Withrdraw tokens from contract", () => {
         describe("Success", async () => {
             it("owner can withdraw reflection tokens", async () => {
+                // enable trading
+                const txRule = await contract.connect(owner).setRule(ammpair.address);
 
                 const sentTokenAmount = ethers.parseUnits("200000");
                 const fundtx = await contract
