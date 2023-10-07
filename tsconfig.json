@@ -1,5 +1,5 @@
 {
-  "include": ["./scripts", "./tests", "./typechain-types", "ref2.ts"],
+  "include": ["./scripts", "./tests", "./typechain-types", "ref2.ts", "@experimental/ERC20ReflectionsBlacklist.ts"],
   "files": ["./hardhat.config.ts"],
   "compilerOptions": {
     "target": "es2020",
