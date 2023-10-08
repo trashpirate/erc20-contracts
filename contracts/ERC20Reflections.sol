@@ -1,3 +1,7 @@
+/**
+
+ */
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
@@ -22,7 +26,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
     uint256 public txFee = 200; // 200 => 2%
     uint256 public accumulatedFees;
-    address public uniswapV2Pair;
+    // address public uniswapV2Pair;
 
     mapping(address => uint256) private _rBalances; // balances in r-space
     mapping(address => uint256) private _tBalances; // balances in t-space
@@ -169,10 +173,10 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         isExcludedFromFee[account] = false;
     }
 
-    function enableTrading(address _uniswapV2Pair) external onlyOwner {
-        uniswapV2Pair = _uniswapV2Pair;
-        excludeFromReward(uniswapV2Pair);
-    }
+    // function enableTrading(address _uniswapV2Pair) external onlyOwner {
+    //     uniswapV2Pair = _uniswapV2Pair;
+    //     excludeFromReward(uniswapV2Pair);
+    // }
 
     // withdraw tokens from contract (only owner)
     function withdrawTokens(
@@ -213,9 +217,9 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
         _beforeTokenTransfer(from, to, amount);
 
-        if (uniswapV2Pair == address(0)) {
-            require(from == owner() || to == owner(), "Trading has not started");
-        }
+        // if (uniswapV2Pair == address(0)) {
+        //     require(from == owner() || to == owner(), "Trading has not started");
+        // }
 
         uint256 _txFee;
         if (isExcludedFromFee[from] || isExcludedFromFee[to]) {
@@ -255,6 +259,8 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         // rTotalSupply and tTotalSupply, and the sum is preserved by
         // decrementing then incrementing.
         unchecked {
+            
+
             // udpate balances in r-space
             _rBalances[from] = rFromBalance - rAmount;
             _rBalances[to] += rTransferAmount;

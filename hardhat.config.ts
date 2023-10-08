@@ -34,6 +34,10 @@ const config: HardhatUserConfig = {
       accounts: [`0x${ process.env.PRIVATE_KEY }`],
       url: `https://eth-goerli.g.alchemy.com/v2/${ process.env.ALCHEMY_API_KEY }`,
     },
+    BSC_MAINNET: {
+      accounts: [`0x${ process.env.PRIVATE_KEY }`],
+      url: "https://rpc.ankr.com/bsc/593f8b90ce34e79ca40dcd9a571fc6e4c9d0d8030a929e6b896d1bcedb6516dd",
+    },
 
   },
   gasReporter: {
@@ -45,6 +49,7 @@ const config: HardhatUserConfig = {
     token: "ETH",
   },
   etherscan: {
+    // apiKey: `${ process.env.BSCSCAN_API_KEY }`,
     apiKey: `${ process.env.ETHERSCAN_API_KEY }`,
   },
   paths: {tests: "tests"},

@@ -8,7 +8,7 @@ describe("Contract", () => {
     let contract: ERC20Reflections;
     let deployer: HardhatEthersSigner;
     let owner: HardhatEthersSigner;
-    let addr1: HardhatEthersSigner, addr2: HardhatEthersSigner;
+    let addr1: HardhatEthersSigner, addr2: HardhatEthersSigner, addr3: HardhatEthersSigner;
     let ammpair: HardhatEthersSigner;
 
     // variables for contract creation: adjust as needed
@@ -23,7 +23,7 @@ describe("Contract", () => {
         // Fetch conract from blockchain
         const MyContract = await ethers.getContractFactory("ERC20Reflections");
         contract = await MyContract.deploy(name, symbol, contractOwner);
-        [deployer, owner, addr1, addr2, ammpair] = await ethers.getSigners();
+        [deployer, owner, addr1, addr2, addr3, ammpair] = await ethers.getSigners();
 
     });
 
@@ -67,79 +67,79 @@ describe("Contract", () => {
                 );
                 console.log(`\tSupply at: ${ owner.address }`);
             });
-            it("uniswap pair is zero address", async () => {
-                expect(await contract.uniswapV2Pair()).to.equal(
-                    ethers.ZeroAddress
-                );
-            });
+            // it("uniswap pair is zero address", async () => {
+            //     expect(await contract.uniswapV2Pair()).to.equal(
+            //         ethers.ZeroAddress
+            //     );
+            // });
 
         });
 
 
     });
 
-    describe("Start trading", () => {
+    // describe("Start trading", () => {
 
-        describe("Success", async () => {
-            it("owner can transfer before trading starts", async () => {
-                const amount = ethers.parseUnits("4000");
-                const tx = await contract
-                    .connect(owner)
-                    .transfer(addr1.address, amount);
-                expect(await contract.balanceOf(addr1.address)).to.eq(amount);
-            });
-            it("owner can receive before trading starts", async () => {
-                const amount1 = ethers.parseUnits("4000");
-                const amount2 = ethers.parseUnits("2000");
+    //     describe("Success", async () => {
+    //         it("owner can transfer before trading starts", async () => {
+    //             const amount = ethers.parseUnits("4000");
+    //             const tx = await contract
+    //                 .connect(owner)
+    //                 .transfer(addr1.address, amount);
+    //             expect(await contract.balanceOf(addr1.address)).to.eq(amount);
+    //         });
+    //         it("owner can receive before trading starts", async () => {
+    //             const amount1 = ethers.parseUnits("4000");
+    //             const amount2 = ethers.parseUnits("2000");
 
-                const tx1 = await contract
-                    .connect(owner)
-                    .transfer(addr1.address, amount1);
-                const tx2 = await contract
-                    .connect(addr1)
-                    .transfer(owner.address, amount2);
-                expect(await contract.balanceOf(addr1.address)).to.eq(amount1 - amount2);
-            });
-            it("owner can set rule", async () => {
-                const txRule = await contract.connect(owner).enableTrading(ammpair.address);
-                expect(await contract.uniswapV2Pair()).to.eq(ammpair.address);
-            });
-            it("transaction possible after trading starts", async () => {
+    //             const tx1 = await contract
+    //                 .connect(owner)
+    //                 .transfer(addr1.address, amount1);
+    //             const tx2 = await contract
+    //                 .connect(addr1)
+    //                 .transfer(owner.address, amount2);
+    //             expect(await contract.balanceOf(addr1.address)).to.eq(amount1 - amount2);
+    //         });
+    //         it("owner can set rule", async () => {
+    //             const txRule = await contract.connect(owner).enableTrading(ammpair.address);
+    //             expect(await contract.uniswapV2Pair()).to.eq(ammpair.address);
+    //         });
+    //         it("transaction possible after trading starts", async () => {
 
-                const amount1 = ethers.parseUnits("4000");
-                const amount2 = ethers.parseUnits("2000");
-                const tx0 = await contract
-                    .connect(owner)
-                    .transfer(addr1.address, amount1 + amount2);
-                const txFee = await contract.connect(owner).setTransactionFee("0");
-                const txRule = await contract.connect(owner).enableTrading(ammpair.address);
-                const tx1 = await contract
-                    .connect(addr1)
-                    .transfer(addr2.address, amount1);
-                const tx2 = await contract
-                    .connect(addr2)
-                    .transfer(addr1.address, amount2);
-                expect(await contract.balanceOf(addr2.address)).to.eq(amount1 - amount2);
-            });
+    //             const amount1 = ethers.parseUnits("4000");
+    //             const amount2 = ethers.parseUnits("2000");
+    //             const tx0 = await contract
+    //                 .connect(owner)
+    //                 .transfer(addr1.address, amount1 + amount2);
+    //             const txFee = await contract.connect(owner).setTransactionFee("0");
+    //             const txRule = await contract.connect(owner).enableTrading(ammpair.address);
+    //             const tx1 = await contract
+    //                 .connect(addr1)
+    //                 .transfer(addr2.address, amount1);
+    //             const tx2 = await contract
+    //                 .connect(addr2)
+    //                 .transfer(addr1.address, amount2);
+    //             expect(await contract.balanceOf(addr2.address)).to.eq(amount1 - amount2);
+    //         });
 
-        });
+    //     });
 
-        describe("Failure", () => {
-            it("trading reverts if not started", async () => {
-                const amount = ethers.parseUnits("100");
-                await expect(
-                    contract.connect(addr1).transfer(addr2, amount)
-                ).to.be.reverted;
-            });
-            it("reverts if not owner", async () => {
-                await expect(
-                    contract.connect(addr1).enableTrading(ammpair.address)
-                ).to.be.reverted;
-            });
+    //     describe("Failure", () => {
+    //         it("trading reverts if not started", async () => {
+    //             const amount = ethers.parseUnits("100");
+    //             await expect(
+    //                 contract.connect(addr1).transfer(addr2, amount)
+    //             ).to.be.reverted;
+    //         });
+    //         it("reverts if not owner", async () => {
+    //             await expect(
+    //                 contract.connect(addr1).enableTrading(ammpair.address)
+    //             ).to.be.reverted;
+    //         });
 
 
-        });
-    });
+    //     });
+    // });
 
     describe("Sending Tokens without fees", () => {
         let amount: bigint, transferAmount: bigint, prevBalance: bigint;
@@ -196,7 +196,7 @@ describe("Contract", () => {
         });
     });
     describe("Sending Tokens with reflections", () => {
-        let amount: bigint, transferAmount: bigint, prevBalance: bigint;
+        let amount: bigint, prevBalance: bigint;
         beforeEach(async () => {
 
             amount = ethers.parseUnits("100000000");
@@ -214,7 +214,7 @@ describe("Contract", () => {
         describe("Success", async () => {
             it("transfers token balances when excluded", async () => {
                 // enable trading
-                const txRule = await contract.connect(owner).enableTrading(ammpair.address);
+                // const txRule = await contract.connect(owner).enableTrading(ammpair.address);
 
                 // Ensure tokens were transferred (balance change)
                 expect(await contract.balanceOf(owner.address)).to.equal(
@@ -224,56 +224,68 @@ describe("Contract", () => {
                 expect(await contract.balanceOf(addr2.address)).to.equal(amount);
             });
 
-            it("correct amount received with taxes", async () => {
-                // enable trading
-                const txRule = await contract.connect(owner).enableTrading(ammpair.address);
+            // it("receiver gets no reflections if receiver balance = 0", async () => {
+            // // enable trading
+            //     // const txRule = await contract.connect(owner).enableTrading(ammpair.address);
 
-                // amount sent
-                amount = ethers.parseUnits("50000000"); // transfer 50M
+            //     // amount sent
+            //     amount = ethers.parseUnits("50000000"); // transfer 50M
 
-                // amount after fees - 45M
-                transferAmount = amount - amount * BigInt(txFee) / BigInt("10000");
+            //     // amount after fees - 45M
+            //     const transferAmount = amount - amount * BigInt(txFee) / BigInt("10000");
 
-                // balance of supplier
-                const supplyBalance = await contract.balanceOf(owner.address);
-                console.log('Supplier:' + ethers.formatEther(supplyBalance.toString()));
+            //     // no tax because from supplier wallet
+            //     const tx = await contract
+            //         .connect(addr1)
+            //         .transfer(addr3.address, amount);
+
+            //     // received amount should be equal to amount - tax
+            //     expect(await contract.balanceOf(addr3.address)).to.equal(
+            //         transferAmount
+            //     );
+
+            // });
+
+            it("accounts get reflections from transfer", async () => {
+            // enable trading
+            // const txRule = await contract.connect(owner).enableTrading(ammpair.address);
 
                 // balances in before sending
                 const prevBalanceAddr1 = await contract.balanceOf(addr1.address);
                 const prevBalanceAddr2 = await contract.balanceOf(addr2.address);
+                // console.log(ethers.formatEther(prevBalanceAddr1));
+                // console.log(ethers.formatEther(prevBalanceAddr2));
 
-                // balance in addr1 after sending
-                const balanceAddr1 = prevBalanceAddr1 - amount;
+                // amount sent
+                const amount1 = ethers.parseUnits("10000000"); // transfer 50M
 
-                // transfer - addr2 receives 45M
-                const tx_taxed = await contract
+                // amount after fees - 45M
+                const transferAmount = amount1 - amount1 * BigInt(txFee) / BigInt("10000");
+
+                // fees collected
+                const feesTx1 = amount1 - transferAmount;
+
+                // no reflections because no fees yet
+                const tx1 = await contract
                     .connect(addr1)
-                    .transfer(addr2.address, amount);
+                    .transfer(addr2.address, amount1);
 
-                // balance in addr2 after transfer
-                const balanceAddr2 = prevBalanceAddr2 + transferAmount;
-
-                // calc reflections
                 const totalSupply = ethers.parseUnits(initialSupply) as bigint;
-                // console.log('TotalSupply:' + ethers.formatEther(totalSupply.toString()));
+                const reflectionSupply = totalSupply - feesTx1;
+                const reflectAddr1 = (prevBalanceAddr1 - amount1) * feesTx1 / reflectionSupply;
+                const reflectAddr2 = (prevBalanceAddr2 + transferAmount) * feesTx1 / reflectionSupply;
+                console.log(ethers.formatEther(reflectAddr1));
+                console.log(ethers.formatEther(reflectAddr2));
 
-                const totalReflections = amount - transferAmount;
-                // console.log('Reflections Total:' + ethers.formatEther(totalReflections.toString()));
-
-                const reflectionSupply = totalSupply - totalReflections;
-                const reflectAddr1 = balanceAddr1 * totalReflections / reflectionSupply;
-                // console.log('Reflections Addr1:' + ethers.formatEther(reflectAddr1.toString()));
-                const reflectAddr2 = balanceAddr2 * totalReflections / reflectionSupply;
-                console.log('Reflections Addr2:' + ethers.formatEther(reflectAddr2.toString()));
-
-                // check amount sender
-                expect(await contract.balanceOf(addr1.address)).to.equal(
-                    balanceAddr1 + reflectAddr1
-                );
-                // check amount receiver
+                // received amount should be equal to amount - tax + reflections
                 expect(await contract.balanceOf(addr2.address)).to.equal(
-                    balanceAddr2 + reflectAddr2
+                    prevBalanceAddr2 + transferAmount + reflectAddr2
                 );
+                // sent amount should be equal balance after transfer + reflections
+                expect(await contract.balanceOf(addr1.address)).to.equal(
+                    prevBalanceAddr1 - amount1 + reflectAddr1
+                );
+
             });
 
 
@@ -548,7 +560,7 @@ describe("Contract", () => {
         describe("Success", async () => {
             it("owner can withdraw reflection tokens", async () => {
                 // enable trading
-                const txRule = await contract.connect(owner).enableTrading(ammpair.address);
+                // const txRule = await contract.connect(owner).enableTrading(ammpair.address);
 
                 const sentTokenAmount = ethers.parseUnits("200000");
                 const fundtx = await contract

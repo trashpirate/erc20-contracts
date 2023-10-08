@@ -4,13 +4,13 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // run this script with hardhat: npx hardhat run ./scripts/mainnet/verifyERC20Reflections.ts --network ETH_MAINNET
-const name = "HermioneGrangerTrumpKnuckles888Inu ";
-const symbol = "BITCONNECT";
+const name = "MyToken";
+const symbol = "MTK";
 const decimals = 18;
 const txFee = "500";
 const initialSupply = "1000000000";
 const constructorArguments = [name, symbol, process.env.OWNER_ADDRESS_MAINNET];
-const contractAddress = "0x57a2AAF63Fec11D1F83BaBA543373d3eebd810A8";
+const contractAddress = "0xA2e581d0423B4f83919502Cf7efb72F6f8aae63e";
 
 async function main() {
 
