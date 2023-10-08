@@ -6,8 +6,8 @@ dotenv.config();
 async function main() {
 
     // variables for contract creation: adjust as needed
-    const name = "MyToken";
-    const symbol = "MTK";
+    const name = "Cocaine Cats";
+    const symbol = "COKE";
     const decimals = 18;
     const txFee = "200";
     const initialSupply = "1000000000";

@@ -1,5 +1,6 @@
 /**
-    socials
+    Cocaine Cats (COKE)
+    Telegram: https://t.me/CocaineCatsCOKE
  */
 
 // SPDX-License-Identifier: MIT
@@ -10,12 +11,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-/**
- * @dev This contract is derived from the ERC20.sol by openzeppelin and the
- reflection token contract by CoinTools. The contract removes liquidity and
- burn fee and only redistributes tokens to holders. This contract has improvements
- in terms of gas efficiency, security, and readibility.
- */
 contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
     uint256 private constant MAX = ~uint256(0);
     uint256 private _rTotalSupply; // total supply in r-space
@@ -26,7 +21,6 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
     uint256 public txFee = 200; // 200 => 2%
     uint256 public accumulatedFees;
-    // address public uniswapV2Pair;
 
     mapping(address => uint256) private _rBalances; // balances in r-space
     mapping(address => uint256) private _tBalances; // balances in t-space
@@ -173,11 +167,6 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         isExcludedFromFee[account] = false;
     }
 
-    // function enableTrading(address _uniswapV2Pair) external onlyOwner {
-    //     uniswapV2Pair = _uniswapV2Pair;
-    //     excludeFromReward(uniswapV2Pair);
-    // }
-
     // withdraw tokens from contract (only owner)
     function withdrawTokens(
         address tokenAddress,
@@ -216,10 +205,6 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         require(amount > 0, "Transfer amount must be greater than zero");
 
         _beforeTokenTransfer(from, to, amount);
-
-        // if (uniswapV2Pair == address(0)) {
-        //     require(from == owner() || to == owner(), "Trading has not started");
-        // }
 
         uint256 _txFee;
         if (isExcludedFromFee[from] || isExcludedFromFee[to]) {
