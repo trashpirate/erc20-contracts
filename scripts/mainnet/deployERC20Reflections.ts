@@ -1,5 +1,5 @@
 import {ethers} from "ethers";
-import {ERC20Reflections__factory} from "../../typechain-types";
+import {HoldEarn, HoldEarn__factory} from "../../typechain-types";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -33,8 +33,8 @@ async function main() {
     // deploy contract
     const owner = process.env.OWNER_ADDRESS_MAINNET as string;
 
-    const contractFactory = new ERC20Reflections__factory(wallet);
-    const contract = await contractFactory.deploy(name, symbol, owner);
+    const contractFactory = new HoldEarn__factory(wallet);
+    const contract = await contractFactory.deploy(owner);
     await contract.waitForDeployment();
     const contractAddress = await contract.getAddress();
     console.log(`Token contract deployed at ${ contractAddress }`);

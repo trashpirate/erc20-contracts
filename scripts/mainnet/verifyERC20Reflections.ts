@@ -4,13 +4,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // run this script with hardhat: npx hardhat run ./scripts/mainnet/verifyERC20Reflections.ts --network ETH_MAINNET
-const name = "HOLD";
-const symbol = "EARN";
-const decimals = 18;
-const txFee = "500";
-const initialSupply = "1000000000";
-const constructorArguments = [name, symbol, process.env.OWNER_ADDRESS_MAINNET];
-const contractAddress = "0xFdE356C8F279AaC7AA7e78d5b6b3c9DCb98e4ed7";
+const constructorArguments = [process.env.OWNER_ADDRESS_MAINNET];
+const contractAddress = "0x0b61C4f33BCdEF83359ab97673Cb5961c6435F4E";
 
 async function main() {
 
@@ -20,12 +15,12 @@ async function main() {
         await hre.run("verify:verify", {
             address: contractAddress,
             constructorArguments: constructorArguments,
-            contract: "contracts/ERC20Reflections.sol:ERC20Reflections"
+            contract: "contracts/HoldEarn.sol:HoldEarn"
         });
     } else {
         await hre.run("verify:verify", {
             address: contractAddress,
-            contract: "contracts/ERC20Reflections.sol:ERC20Reflections"
+            contract: "contracts/HoldEarn.sol:HoldEarn"
         });
     }
 }

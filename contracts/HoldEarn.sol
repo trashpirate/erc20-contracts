@@ -6,6 +6,13 @@
  */
 
 // SPDX-License-Identifier: MIT
+
+/**
+ This contract is derived from the ERC20.sol by openzeppelin and the
+ reflection token contract by CoinTools. The contract removes liquidity and
+ burn fee and only redistributes tokens to holders.
+ */
+
 pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -13,13 +20,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-/**
- * @dev This contract is derived from the ERC20.sol by openzeppelin and the
- reflection token contract by CoinTools. The contract removes liquidity and
- burn fee and only redistributes tokens to holders. This contract has improvements
- in terms of gas efficiency, security, and readibility.
- */
-contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
+contract HoldEarn is Context, IERC20, IERC20Metadata, Ownable {
     uint256 private constant MAX = ~uint256(0);
     uint256 private _rTotalSupply; // total supply in r-space
     uint256 private immutable _tTotalSupply; // total supply in t-space
@@ -27,8 +28,8 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
     string private _symbol;
     address[] private _excludedFromReward;
 
-    uint256 public txFee = 200; // 200 => 2%
-    uint256 public accumulatedFees;
+    uint256 public taxFee = 200; // 200 => 2%
+    uint256 public totalFees;
 
     mapping(address => uint256) private _rBalances; // balances in r-space
     mapping(address => uint256) private _tBalances; // balances in t-space
@@ -39,13 +40,13 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
 
     event SetFee(uint256 value);
 
-    constructor(string memory name_, string memory symbol_, address owner_) {
-        _name = name_;
-        _symbol = symbol_;
-        _tTotalSupply = 1_000_000_000 * 10 ** decimals();
+    constructor(address owner_) {
+        _name = 'HOLD';
+        _symbol = 'EARN';
+        _tTotalSupply = 1000000000 * 10 ** decimals();
         excludeFromFee(owner_);
         excludeFromFee(address(this));
-        _mint(owner_, _tTotalSupply); // for deployer use msg.sender
+        _mint(owner_, _tTotalSupply);
         _transferOwnership(owner_);
     }
 
@@ -68,7 +69,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
     function balanceOf(
         address account
     ) public view virtual override returns (uint256) {
-        uint256 rate = _conversionRate();
+        uint256 rate = _getRate();
         return _rBalances[account] / rate;
     }
 
@@ -134,9 +135,9 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         return true;
     }
 
-    function setTransactionFee(uint256 newTxFee) public onlyOwner {
-        txFee = newTxFee;
-        emit SetFee(txFee);
+    function setFee(uint256 newTxFee) public onlyOwner {
+        taxFee = newTxFee;
+        emit SetFee(taxFee);
     }
 
     function excludeFromReward(address account) public onlyOwner {
@@ -144,7 +145,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         require(_excludedFromReward.length < 100, "Excluded list is too long");
 
         if (_rBalances[account] > 0) {
-            uint256 rate = _conversionRate();
+            uint256 rate = _getRate();
             _tBalances[account] = _rBalances[account] / rate;
         }
         isExcludedFromReward[account] = true;
@@ -175,7 +176,6 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         isExcludedFromFee[account] = false;
     }
 
-    // withdraw tokens from contract (only owner)
     function withdrawTokens(
         address tokenAddress,
         address receiverAddress
@@ -185,7 +185,7 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         return tokenContract.transfer(receiverAddress, amount);
     }
 
-    function _conversionRate() private view returns (uint256) {
+    function _getRate() private view returns (uint256) {
         uint256 rSupply = _rTotalSupply;
         uint256 tSupply = _tTotalSupply;
 
@@ -212,22 +212,20 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
 
-        _beforeTokenTransfer(from, to, amount);
-
-        uint256 _txFee;
+        uint256 _taxFee;
         if (isExcludedFromFee[from] || isExcludedFromFee[to]) {
-            _txFee = 0;
+            _taxFee = 0;
         } else {
-            _txFee = txFee;
+            _taxFee = taxFee;
         }
 
         // calc t-values
         uint256 tAmount = amount;
-        uint256 tTxFee = (tAmount * _txFee) / 10000;
+        uint256 tTxFee = (tAmount * _taxFee) / 10000;
         uint256 tTransferAmount = tAmount - tTxFee;
 
         // calc r-values
-        uint256 rate = _conversionRate();
+        uint256 rate = _getRate();
         uint256 rTxFee = tTxFee * rate;
         uint256 rAmount = tAmount * rate;
         uint256 rTransferAmount = rAmount - rTxFee;
@@ -263,37 +261,38 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
             } else if (
                 isExcludedFromReward[from] && !isExcludedFromReward[to]
             ) {
+                // could technically underflow but because tAmount is a
+                // function of rAmount and _rTotalSupply == _tTotalSupply
+                // it won't
                 _tBalances[from] = tFromBalance - tAmount;
             } else if (
                 !isExcludedFromReward[from] && isExcludedFromReward[to]
             ) {
+                // could technically overflow but because tAmount is a
+                // function of rAmount and _rTotalSupply == _tTotalSupply
+                // it won't
                 _tBalances[to] += tTransferAmount;
             }
 
             // reflect fee
             // can never go below zero because rTxFee percentage of
-            // _rTotalSupply
+            // current _rTotalSupply
             _rTotalSupply = _rTotalSupply - rTxFee;
-            accumulatedFees += tTxFee;
+            totalFees += tTxFee;
         }
 
         emit Transfer(from, to, tTransferAmount);
 
-        _afterTokenTransfer(from, to, amount);
     }
 
     function _mint(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: mint to the zero address");
-
-        _beforeTokenTransfer(address(0), account, amount);
 
         _rTotalSupply += (MAX - (MAX % amount));
         unchecked {
             _rBalances[account] += _rTotalSupply;
         }
         emit Transfer(address(0), account, amount);
-
-        _afterTokenTransfer(address(0), account, amount);
     }
 
     function _approve(
@@ -324,16 +323,4 @@ contract ERC20Reflections is Context, IERC20, IERC20Metadata, Ownable {
             }
         }
     }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {}
-
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {}
 }

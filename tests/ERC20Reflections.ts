@@ -1,28 +1,28 @@
 import {expect} from 'chai';
 import {ethers} from 'hardhat';
-import {ERC20Reflections, ERC20Reflections__factory, ERC20Basic__factory} from '../typechain-types';
+import {HoldEarn, HoldEarn__factory, ERC20Basic__factory} from '../typechain-types';
 import {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Contract", () => {
 
-    let contract: ERC20Reflections;
+    let contract: HoldEarn;
     let deployer: HardhatEthersSigner;
     let owner: HardhatEthersSigner;
     let addr1: HardhatEthersSigner, addr2: HardhatEthersSigner;
     let ammpair: HardhatEthersSigner;
 
     // variables for contract creation: adjust as needed
-    const name = "MyToken";
-    const symbol = "MTK";
+    const name = "HOLD";
+    const symbol = "EARN";
     const decimals = 18;
-    const txFee = "200";
+    const taxFee = "200";
     const initialSupply = "1000000000";
     const contractOwner = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
 
     beforeEach(async () => {
         // Fetch conract from blockchain
-        const MyContract = await ethers.getContractFactory("ERC20Reflections");
-        contract = await MyContract.deploy(name, symbol, contractOwner);
+        const MyContract = await ethers.getContractFactory("HoldEarn");
+        contract = await MyContract.deploy(contractOwner);
         [deployer, owner, addr1, addr2, ammpair] = await ethers.getSigners();
 
     });
@@ -50,7 +50,7 @@ describe("Contract", () => {
             });
 
             it("has correct fee", async () => {
-                expect(await contract.txFee()).to.equal(txFee);
+                expect(await contract.taxFee()).to.equal(taxFee);
                 console.log(`\tTotal Supply: ${ ethers.formatEther(await contract.totalSupply()) }`);
             });
 
@@ -78,7 +78,7 @@ describe("Contract", () => {
         beforeEach(async () => {
 
             amount = ethers.parseUnits("4000");
-            transferAmount = amount - amount * BigInt(txFee) / BigInt("10000");
+            transferAmount = amount - amount * BigInt(taxFee) / BigInt("10000");
             prevBalance = await contract.balanceOf(owner.address);
             const transaction = await contract
                 .connect(owner)
@@ -158,7 +158,7 @@ describe("Contract", () => {
                 amount = ethers.parseUnits("50000000"); // transfer 50M
 
                 // amount after fees - 45M
-                transferAmount = amount - amount * BigInt(txFee) / BigInt("10000");
+                transferAmount = amount - amount * BigInt(taxFee) / BigInt("10000");
 
                 // balance of supplier
                 const supplyBalance = await contract.balanceOf(owner.address);
@@ -439,15 +439,15 @@ describe("Contract", () => {
         describe("Success", async () => {
             it("fee is set correctly", async () => {
                 const newFee = "200";
-                const txFee = await contract.connect(owner).setTransactionFee(newFee);
-                expect(await contract.txFee()).to.equal(
+                const taxFee = await contract.connect(owner).setFee(newFee);
+                expect(await contract.taxFee()).to.equal(
                     newFee
                 );
             });
 
             it("emits a setfee event", async () => {
                 const newFee = "200";
-                const txFee = await contract.connect(owner).setTransactionFee(newFee);
+                const taxFee = await contract.connect(owner).setFee(newFee);
 
                 // Check for event
                 const filter = contract.filters.SetFee;
@@ -465,7 +465,7 @@ describe("Contract", () => {
         describe("Failure", () => {
 
             it("reverts if not owner wants to set fee", async () => {
-                await expect(contract.connect(addr1).setTransactionFee("300")).to.be.reverted;
+                await expect(contract.connect(addr1).setFee("300")).to.be.reverted;
             });
         });
     });
